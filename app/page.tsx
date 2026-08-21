@@ -65,7 +65,7 @@ export default function Home() {
   const [chatMessage, setChatMessage] = useState('')
 
   // Нэвтрэх функц
-  function handleLogin(e) {
+  function handleLogin(e: any) {
     e.preventDefault()
     if (pin === '1234') {
       setIsTeacher(true)
@@ -77,7 +77,7 @@ export default function Home() {
   }
 
   // Ангийн ажил нэмэх
-  function handleAddNews(e) {
+  function handleAddNews(e: any) {
     e.preventDefault()
     if (!newNewsTitle || !newNewsDesc) return
     setNewsList([...newsList, { id: Date.now(), title: newNewsTitle, date: new Date().toISOString().split('T')[0], desc: newNewsDesc }])
@@ -86,7 +86,7 @@ export default function Home() {
   }
 
   // Сурагч нэмэх
-  function handleAddStudent(e) {
+  function handleAddStudent(e: any) {
     e.preventDefault()
     if (!newStudName || !newStudCode) return
     setStudents([...students, { id: Date.now(), name: newStudName, code: newStudCode, parentPhone: newStudPhone }])
@@ -97,7 +97,7 @@ export default function Home() {
   }
 
   // Чат бичих (Эцэг эх, сурагчид)
-  function handleSendChat(e) {
+  function handleSendChat(e: any) {
     e.preventDefault()
     if (!chatSender || !chatMessage) return alert('Нэр болон зурвасаа оруулна уу!')
     setChats([...chats, { id: Date.now(), sender: chatSender, text: chatMessage, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
