@@ -1,7 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 
+// --- Икон бүрэлдэхүүн хэсгүүд (Minimalist SVG Icons) ---
+const CalendarIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+const AnnouncementIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A2.5 2.5 0 013 11.2V8.8a2.5 2.5 0 012.436-2.483l6.564-.656v9.338l-6.564-.656z" />
+  </svg>
+);
+
+const BookIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+  </svg>
+);
+
+const TaskIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+  </svg>
+);
+
+const UsersIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+
+const RuleIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
+
+const GradeIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002 2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+  </svg>
+);
+
+const ChatIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+  </svg>
+);
+
+// --- Дата Интерфэйсүүд ---
 interface Student {
   id: number;
   name: string;
@@ -35,756 +85,937 @@ interface Announcement {
   title: string;
   date: string;
   content: string;
+  important?: boolean;
 }
 
 interface ScheduleDay {
   day: string;
-  lessons: string[]; // Өдөрт 7 цагийн хичээл
+  lessons: string[];
 }
 
+interface GradeRecord {
+  id: number;
+  studentId: number;
+  subject: string;
+  score: string;
+  date: string;
+  comment: string;
+}
+
+interface ChatMessage {
+  id: number;
+  sender: "teacher" | "parent";
+  studentCode?: string;
+  text: string;
+  time: string;
+}
+
+// Эхлэлийн дата
 const INITIAL_STUDENTS: Student[] = [
   { id: 1, name: "Амина.Э", code: "STU-001", grade: "A" },
   { id: 2, name: "Аминзаяа.М", code: "STU-002", grade: "B" },
-  { id: 3, name: "Амин-Очир.А", code: "STU-003", grade: "A" },
-  { id: 4, name: "Ананд.М", code: "STU-004", grade: "B" },
-  { id: 5, name: "Ану-Үжин.А", code: "STU-005", grade: "A" },
-  { id: 6, name: "Аривдах.Б", code: "STU-006", grade: "C" },
-  { id: 7, name: "Ариунтуяа.Э", code: "STU-007", grade: "B" },
-  { id: 8, name: "Бадрах.Д", code: "STU-008", grade: "A" },
-  { id: 9, name: "Бадрах.Э", code: "STU-009", grade: "B" },
-  { id: 10, name: "Буяндэлгэр.Г", code: "STU-010", grade: "B" },
-  { id: 11, name: "Билэгт.Б", code: "STU-011", grade: "A" },
-  { id: 12, name: "Гообэлэг.О", code: "STU-012", grade: "A" },
-  { id: 13, name: "Гэгээнбилэгт.Ч", code: "STU-013", grade: "C" },
-  { id: 14, name: "Гэгээн-Энэрэл.О", code: "STU-014", grade: "A" },
-  { id: 15, name: "Дүүрэнбилэг.Т", code: "STU-015", grade: "B" },
-  { id: 16, name: "Маралгоо.А", code: "STU-016", grade: "A" },
-  { id: 17, name: "Мөнхбаатар.Т", code: "STU-017", grade: "B" },
-  { id: 18, name: "Мөнхдөл.М", code: "STU-018", grade: "B" },
-  { id: 19, name: "Мөнхжаргал.М", code: "STU-019", grade: "A" },
-  { id: 20, name: "Мөнх-Од.Г", code: "STU-020", grade: "B" },
-  { id: 21, name: "Мустахим.Ж", code: "STU-021", grade: "B" },
-  { id: 22, name: "Мягмарбаяр.Ч", code: "STU-022", grade: "C" },
-  { id: 23, name: "Нандин.Э", code: "STU-023", grade: "A" },
-  { id: 24, name: "Нандин-Эрдэнэ.Л", code: "STU-024", grade: "A" },
-  { id: 25, name: "Өнөргэрэлт.Г", code: "STU-025", grade: "B" },
-  { id: 26, name: "Өнөржаргал.Э", code: "STU-026", grade: "B" },
-  { id: 27, name: "Өрнүүнбилэг.Ө", code: "STU-027", grade: "A" },
-  { id: 28, name: "Сайнзаяа.Э", code: "STU-028", grade: "B" },
-  { id: 29, name: "Сувд-Эрдэнэ.Э", code: "STU-029", grade: "B" },
-  { id: 30, name: "Суутан.Д", code: "STU-030", grade: "A" },
-  { id: 31, name: "Сүлд.Э", code: "STU-031", grade: "C" },
-  { id: 32, name: "Төгсдуулга.О", code: "STU-032", grade: "B" },
-  { id: 33, name: "Төгс-Эрдэнэ.Т", code: "STU-033", grade: "A" },
-  { id: 34, name: "Төгөлдөр.З", code: "STU-034", grade: "B" },
-  { id: 35, name: "Хадбаатар.А", code: "STU-035", grade: "B" },
-  { id: 36, name: "Хулан.Ү", code: "STU-036", grade: "A" },
-  { id: 37, name: "Хүслэн.Ц", code: "STU-037", grade: "C" },
-  { id: 38, name: "Цэлмэг.Б", code: "STU-038", grade: "A" },
-  { id: 39, name: "Чамин-Эрдэнэ.Ц", code: "STU-039", grade: "A" },
-  { id: 40, name: "Энх-Учрал.Б", code: "STU-040", grade: "B" },
-  { id: 41, name: "Энхжаргал.Д", code: "STU-041", grade: "B" },
-  { id: 42, name: "Энхлэн.Д", code: "STU-042", grade: "A" },
-  { id: 43, name: "Энэрэл.Б", code: "STU-043", grade: "A" },
-  { id: 44, name: "Эрхэмбаяр.Л", code: "STU-044", grade: "B" },
+  { id: 3, name: "Бат-Эрдэнэ.Б", code: "STU-003", grade: "A" },
+  { id: 4, name: "Билгүүн.Г", code: "STU-004", grade: "A-" },
+  { id: 5, name: "Тэмүүлэн.О", code: "STU-005", grade: "B+" },
 ];
 
-// Өдөр бүр 7 цагийн хичээлийн анхны хуваарь
 const INITIAL_SCHEDULE: ScheduleDay[] = [
-  { day: "Даваа", lessons: ["Математик", "Монгол хэл", "Англи хэл", "Биеийн тамир", "Байгаль шинжлэл", "", ""] },
-  { day: "Мягмар", lessons: ["Байгаль шинжлэл", "Математик", "Уран зохиол", "Дүрслэх урлаг", "Англи хэл", "", ""] },
-  { day: "Лхагва", lessons: ["Монгол хэл", "Мэдээлэл технологи", "Математик", "Хөгжим", "Иргэний ёс зүй", "", ""] },
-  { day: "Пүрэв", lessons: ["Англи хэл", "Математик", "Иргэний ёс зүй", "Биеийн тамир", "Уран зохиол", "", ""] },
-  { day: "Баасан", lessons: ["Монгол хэл", "Математик", "Дизайн технологи", "Ангийн цаг", "Сонгон хичээл", "", ""] },
+  { day: "Даваа", lessons: ["Математик", "Монгол хэл", "Англи хэл", "Биеийн тамир", "Байгаль шинжлэл", "-", "-"] },
+  { day: "Мягмар", lessons: ["Байгаль шинжлэл", "Математик", "Уран зохиол", "Дүрслэх урлаг", "Англи хэл", "-", "-"] },
+  { day: "Лхагва", lessons: ["Монгол хэл", "Мэдээлэл технологи", "Математик", "Хөгжим", "Иргэний ёс зүй", "-", "-"] },
+  { day: "Пүрэв", lessons: ["Англи хэл", "Математик", "Иргэний ёс зүй", "Биеийн тамир", "Уран зохиол", "-", "-"] },
+  { day: "Баасан", lessons: ["Монгол хэл", "Математик", "Дизайн технологи", "Ангийн цаг", "Сонгон хичээл", "-", "-"] },
 ];
 
-export default function ClassroomSystem() {
+const INITIAL_ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: 1,
+    title: "Эцэг эхийн нэгдсэн хурал",
+    date: "2026.08.25",
+    content: "Ирэх Баасан гарагт 18:00 цагаас 5-р ангийн эцэг эхийн хурал хичээлийн 204 тоотод болно. Та бүхэн идэвхтэй оролцоно уу.",
+    important: true,
+  },
+  {
+    id: 2,
+    title: "Эрүүл мэндийн үзлэг",
+    date: "2026.08.22",
+    content: "Маргааш сурагчдын жилийн эхний эрүүл мэндийн урьдчилан сэргийлэх үзлэг явагдана.",
+    important: false,
+  },
+];
+
+const INITIAL_HOMEWORK: Homework[] = [
+  {
+    id: 1,
+    subject: "Математик",
+    title: "Дасгал 102-108 бодох",
+    dueDate: "2026.08.24",
+    description: "Сурах бичгийн 45-р хуудасны 102-оос 108 хүртэлх бодлогуудыг дэвтэрт бодож ирэх.",
+  },
+  {
+    id: 2,
+    subject: "Монгол хэл",
+    title: "Эссэ бичих (150-200 үг)",
+    dueDate: "2026.08.25",
+    description: "'Миний зуны амралт' сэдвээр найруулан бичих.",
+  },
+];
+
+const INITIAL_RULES = [
+  "1. Хичээлээс хоцрохгүй, цагтаа ирэх",
+  "2. Багш болон бусдын яриаг анхааралтай сонсох",
+  "3. Анги танхимын цэвэр цэмцгэр байдлыг сахих",
+  "4. Бусдыг хүндэтгэх, нөхөрсөг байх",
+  "5. Хичээлийн хэрэглэгдэхүүнээ бүрэн бэлдэх",
+];
+
+const INITIAL_GRADES: GradeRecord[] = [
+  { id: 1, studentId: 1, subject: "Математик", score: "98 (A)", date: "2026.08.20", comment: "Бодлогыг маш цэгцтэй бодсон" },
+  { id: 2, studentId: 1, subject: "Монгол хэл", score: "92 (A)", date: "2026.08.19", comment: "Цэвэр сайхан бичсэн" },
+  { id: 3, studentId: 2, subject: "Математик", score: "85 (B)", date: "2026.08.20", comment: "Бодлогын зарчим зөв" },
+];
+
+// --- ДИЖИТАЛ ХУАНЛИ ВЕДЖЕТ (ЗҮҮН ДЭЭД ХЭСЭГТ) ---
+function DigitalCalendarWidget() {
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!now) {
+    return (
+      <div className="bg-blue-900/40 border border-blue-700/40 rounded-2xl p-4 text-white animate-pulse">
+        <div className="h-6 bg-blue-800/50 rounded mb-2"></div>
+        <div className="h-4 bg-blue-800/30 rounded"></div>
+      </div>
+    );
+  }
+
+  const timeStr = now.toLocaleTimeString("mn-MN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
+  const dayNames = ["Ням", "Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба"];
+  const dayOfWeek = dayNames[now.getDay()];
+  const monthNames = ["1-р сар", "2-р сар", "3-р сар", "4-р сар", "5-р сар", "6-р сар", "7-р сар", "8-р сар", "9-р сар", "10-р сар", "11-р сар", "12-р сар"];
+
+  // Сарын өдрүүдийн сүлжээ бодох
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayIndex = new Date(year, month, 1).getDay();
+
+  return (
+    <div className="bg-gradient-to-br from-blue-900/80 to-slate-900 border border-blue-700/50 rounded-2xl p-4 text-white shadow-lg backdrop-blur-md mb-6">
+      {/* Дижитал цаг ба Огноо */}
+      <div className="text-center pb-3 border-b border-blue-800/60">
+        <div className="text-2xl font-mono font-bold tracking-widest text-cyan-300 drop-shadow-sm">
+          {timeStr}
+        </div>
+        <div className="text-xs font-medium text-blue-200 mt-1">
+          {year} оны {monthNames[month]} {day} | <span className="text-cyan-400 font-semibold">{dayOfWeek}</span>
+        </div>
+      </div>
+
+      {/* Дижитал Сарын Хуанли */}
+      <div className="mt-3">
+        <div className="grid grid-cols-7 gap-1 text-[10px] text-center font-medium text-blue-300 mb-1">
+          <span className="text-blue-400 font-semibold">Ня</span>
+          <span className="text-blue-400 font-semibold">Да</span>
+          <span className="text-blue-400 font-semibold">Мя</span>
+          <span className="text-blue-400 font-semibold">Лх</span>
+          <span className="text-blue-400 font-semibold">Пү</span>
+          <span className="text-blue-400 font-semibold">Ба</span>
+          <span className="text-blue-400 font-semibold">Бя</span>
+        </div>
+        <div className="grid grid-cols-7 gap-1 text-[11px] text-center">
+          {Array.from({ length: firstDayIndex }).map((_, i) => (
+            <span key={`empty-${i}`} className="py-0.5" />
+          ))}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const d = i + 1;
+            const isToday = d === day;
+            return (
+              <span
+                key={d}
+                className={`py-0.5 rounded-md font-mono transition-all ${
+                  isToday
+                    ? "bg-cyan-400 text-slate-950 font-extrabold shadow-md shadow-cyan-500/30 scale-105"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                }`}
+              >
+                {d}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- НҮҮР ҮНДСЭН АПП ---
+export default function MinimalistSchoolApp() {
   const [role, setRole] = useState<"teacher" | "parent">("teacher");
   const [activeTab, setActiveTab] = useState<
-    "announcements" | "homework" | "tasks" | "students" | "schedule" | "rules" | "grades" | "chat"
+    "schedule" | "announcements" | "homework" | "tasks" | "students" | "grades" | "rules" | "chat"
   >("schedule");
 
+  // Дата төлвүүд
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
-  const [newStudentName, setNewStudentName] = useState("");
-
-  // Эцэг эхийн нэвтрэлт
-  const [parentCodeInput, setParentCodeInput] = useState("");
-  const [loggedInStudent, setLoggedInStudent] = useState<Student | null>(null);
-
-  // 1. Зар мэдээ
-  const [announcements, setAnnouncements] = useState<Announcement[]>([
-    {
-      id: 1,
-      title: "Эцэг эхийн хуралын зар",
-      date: "2026-03-01",
-      content: "Ирэх Даваа гарагийн 18:00 цагт 302 тоот танхимд эцэг эхийн хуралтай тул идэвхтэй оролцоно уу.",
-    },
-    {
-      id: 2,
-      title: "Хаврын амралт ба сургуулийн арга хэмжээ",
-      date: "2026-03-10",
-      content: "Урлагийн үзлэг болон сургуулийн аварга шалгаруулах тэмцээний хуваарийг удахгүй хүргэх болно.",
-    },
-  ]);
-  const [newAnnTitle, setNewAnnTitle] = useState("");
-  const [newAnnContent, setNewAnnContent] = useState("");
-
-  // 2. Гэрийн даалгавар
-  const [homeworks, setHomeworks] = useState<Homework[]>([
-    {
-      id: 1,
-      subject: "Математик",
-      title: "Хуудас 45, Бодлого 1-10",
-      dueDate: "Маргааш",
-      description: "Тэгшитгэл бодох аргыг ашиглан бодолтыг дэвтэрт тэмдэглэж ирэх.",
-    },
-    {
-      id: 2,
-      subject: "Монгол хэл",
-      title: "Эссэ бичих",
-      dueDate: "Баасан гараг",
-      description: "'Эх дэлхий бидний гэр' сэдвээр 150-200 үгэнд багтаан бичнэ үү.",
-    },
-  ]);
-  const [newHwSubject, setNewHwSubject] = useState("");
-  const [newHwTitle, setNewHwTitle] = useState("");
-  const [newHwDueDate, setNewHwDueDate] = useState("");
-  const [newHwDesc, setNewHwDesc] = useState("");
-
-  // 3. Хийгдэх ажлууд & Ирц, Оролцоо
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, title: "Ангийн цэвэрлэгээ ба тохижилт", date: "Баасан гараг", status: "Идэвхтэй", records: {} },
-    { id: 2, title: "Математикийн нээлттэй хичээл", date: "Ирэх Даваа гараг", status: "Төлөвлөсөн", records: {} },
-  ]);
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(1);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-
-  // 4. Хичээлийн хуваарь (5 өдөр, өдөрт 7 цаг)
   const [schedule, setSchedule] = useState<ScheduleDay[]>(INITIAL_SCHEDULE);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
+  const [homework, setHomework] = useState<Homework[]>(INITIAL_HOMEWORK);
+  const [rules, setRules] = useState<string[]>(INITIAL_RULES);
+  const [grades, setGrades] = useState<GradeRecord[]>(INITIAL_GRADES);
+
+  // Эцэг эхийн хувийн код
+  const [parentCode, setParentCode] = useState<string>("");
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
+  // Хичээлийн хуваарь засах
+  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+  const [tempSchedule, setTempSchedule] = useState<ScheduleDay[]>(INITIAL_SCHEDULE);
+
+  // Маягтуудын төлөв
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: "", content: "", important: false });
+  const [newHomework, setNewHomework] = useState({ subject: "Математик", title: "", dueDate: "", description: "" });
+  const [newStudent, setNewStudent] = useState({ name: "", code: "" });
+  const [newGrade, setNewGrade] = useState({ studentId: 1, subject: "Математик", score: "", comment: "" });
+  const [newRule, setNewRule] = useState("");
 
   // Чат
-  const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: 1, sender: "teacher", text: "Сайн байна уу? Хичээлийн хоцрогдлын талаар асуух зүйл байна уу?", time: "14:20" },
+  ]);
+  const [chatInput, setChatInput] = useState("");
 
-  // Эцэг эхийн горимд ЗӨВХӨН тухайн хүүхдийн мэдээллийг шүүж харуулах
-  const displayStudents =
-    role === "parent" && loggedInStudent
-      ? students.filter((s) => s.id === loggedInStudent.id)
-      : students;
+  // Эцэг эхийн пин кодыг шалгах
+  useEffect(() => {
+    if (role === "parent" && parentCode.trim() !== "") {
+      const found = students.find((s) => s.code.toLowerCase() === parentCode.trim().toLowerCase());
+      setSelectedStudent(found || null);
+    } else {
+      setSelectedStudent(null);
+    }
+  }, [role, parentCode, students]);
+
+  // Хичээлийн хуваарь хадгалах
+  const handleSaveSchedule = () => {
+    setSchedule(tempSchedule);
+    setIsEditingSchedule(false);
+  };
+
+  // Шинэ зар нэмэх
+  const handleAddAnnouncement = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAnnouncement.title || !newAnnouncement.content) return;
+    const item: Announcement = {
+      id: Date.now(),
+      title: newAnnouncement.title,
+      content: newAnnouncement.content,
+      important: newAnnouncement.important,
+      date: new Date().toISOString().slice(0, 10).replace(/-/g, "."),
+    };
+    setAnnouncements([item, ...announcements]);
+    setNewAnnouncement({ title: "", content: "", important: false });
+  };
+
+  // Шинэ гэрийн даалгавар нэмэх
+  const handleAddHomework = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHomework.title || !newHomework.dueDate) return;
+    const item: Homework = {
+      id: Date.now(),
+      ...newHomework,
+    };
+    setHomework([item, ...homework]);
+    setNewHomework({ subject: "Математик", title: "", dueDate: "", description: "" });
+  };
 
   // Шинэ сурагч нэмэх
   const handleAddStudent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStudentName.trim()) return;
-    const nextId = students.length > 0 ? Math.max(...students.map((s) => s.id)) + 1 : 1;
-    const codeNumber = String(nextId).padStart(3, "0");
-    const newStudent: Student = {
-      id: nextId,
-      name: newStudentName.trim(),
-      code: `STU-${codeNumber}`,
-      grade: "B",
-    };
-    setStudents([...students, newStudent]);
-    setNewStudentName("");
-  };
-
-  // Зар нэмэх
-  const handleAddAnnouncement = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAnnTitle || !newAnnContent) return;
-    setAnnouncements([
-      { id: Date.now(), title: newAnnTitle, content: newAnnContent, date: new Date().toISOString().slice(0, 10) },
-      ...announcements,
-    ]);
-    setNewAnnTitle("");
-    setNewAnnContent("");
-  };
-
-  // Даалгавар нэмэх
-  const handleAddHomework = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newHwSubject || !newHwTitle) return;
-    setHomeworks([
-      {
-        id: Date.now(),
-        subject: newHwSubject,
-        title: newHwTitle,
-        dueDate: newHwDueDate || "Ойрын үед",
-        description: newHwDesc,
-      },
-      ...homeworks,
-    ]);
-    setNewHwSubject("");
-    setNewHwTitle("");
-    setNewHwDueDate("");
-    setNewHwDesc("");
-  };
-
-  // Ажил нэмэх
-  const handleAddTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim()) return;
-    const newTask: Task = {
+    if (!newStudent.name || !newStudent.code) return;
+    const st: Student = {
       id: Date.now(),
-      title: newTaskTitle.trim(),
-      date: "Ойрын өдрүүдэд",
-      status: "Идэвхтэй",
-      records: {},
+      name: newStudent.name,
+      code: newStudent.code,
+      grade: "A",
     };
-    setTasks([...tasks, newTask]);
-    setSelectedTaskId(newTask.id);
-    setNewTaskTitle("");
+    setStudents([...students, st]);
+    setNewStudent({ name: "", code: "" });
   };
 
-  // Ирц ба оролцоо
-  const handleTaskAttendanceChange = (taskId: number, studentId: number, attendance: TaskRecord["attendance"]) => {
-    setTasks(
-      tasks.map((task) => {
-        if (task.id === taskId) {
-          const currentRecord = task.records[studentId] || { attendance: "Ирсэн", participation: "Идэвхтэй" };
-          return { ...task, records: { ...task.records, [studentId]: { ...currentRecord, attendance } } };
-        }
-        return task;
-      })
-    );
-  };
-
-  const handleTaskParticipationChange = (taskId: number, studentId: number, participation: string) => {
-    setTasks(
-      tasks.map((task) => {
-        if (task.id === taskId) {
-          const currentRecord = task.records[studentId] || { attendance: "Ирсэн", participation: "Идэвхтэй" };
-          return { ...task, records: { ...task.records, [studentId]: { ...currentRecord, participation } } };
-        }
-        return task;
-      })
-    );
-  };
-
-  // Хичээлийн хуваарийн тухайн өдөр ба цагийн хичээлийг засах
-  const handleLessonChange = (dayIdx: number, periodIdx: number, value: string) => {
-    const updatedSchedule = schedule.map((item, dIdx) => {
-      if (dIdx === dayIdx) {
-        const newLessons = [...item.lessons];
-        newLessons[periodIdx] = value;
-        return { ...item, lessons: newLessons };
-      }
-      return item;
-    });
-    setSchedule(updatedSchedule);
-  };
-
-  // Эцэг эхийн нэвтрэлт
-  const handleParentLogin = (e: React.FormEvent) => {
+  // Шинэ дүн нэмэх
+  const handleAddGrade = (e: React.FormEvent) => {
     e.preventDefault();
-    const found = students.find((s) => s.code.toUpperCase() === parentCodeInput.trim().toUpperCase());
-    if (found) {
-      setLoggedInStudent(found);
-    } else {
-      alert("Давтагдашгүй код олдсонгүй! (Жишээ нь: STU-001) шалгана уу.");
-    }
+    if (!newGrade.score) return;
+    const g: GradeRecord = {
+      id: Date.now(),
+      studentId: Number(newGrade.studentId),
+      subject: newGrade.subject,
+      score: newGrade.score,
+      date: new Date().toISOString().slice(0, 10).replace(/-/g, "."),
+      comment: newGrade.comment,
+    };
+    setGrades([g, ...grades]);
+    setNewGrade({ studentId: 1, subject: "Математик", score: "", comment: "" });
   };
 
-  // Чат
+  // Мессеж илгээх
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
-    const sender = role === "teacher" ? "Багш" : `${loggedInStudent?.name || "Эцэг эх"}`;
-    setMessages([...messages, { sender, text: newMessage }]);
-    setNewMessage("");
+    if (!chatInput.trim()) return;
+    const msg: ChatMessage = {
+      id: Date.now(),
+      sender: role,
+      text: chatInput,
+      time: new Date().toLocaleTimeString("mn-MN", { hour: "2-digit", minute: "2-digit" }),
+    };
+    setMessages([...messages, msg]);
+    setChatInput("");
   };
 
-  const selectedTask = tasks.find((t) => t.id === selectedTaskId);
-  const isPrivateTab = ["tasks", "students", "grades"].includes(activeTab);
+  const menuItems = [
+    { id: "schedule", label: "Хичээлийн хуваарь", icon: <CalendarIcon /> },
+    { id: "announcements", label: "Зар мэдээ", icon: <AnnouncementIcon /> },
+    { id: "homework", label: "Гэрийн даалгавар", icon: <BookIcon /> },
+    { id: "tasks", label: "Хийгдэх ажлууд & Ирц", icon: <TaskIcon /> },
+    { id: "students", label: "Сурагчийн жагсаалт", icon: <UsersIcon /> },
+    { id: "grades", label: "Дүнгийн мэдээ", icon: <GradeIcon /> },
+    { id: "rules", label: "Ангийн дүрэм", icon: <RuleIcon /> },
+    { id: "chat", label: "Чат & Холбоо", icon: <ChatIcon /> },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans p-2 md:p-6">
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-        
-        {/* Толгой хэсэг */}
-        <div className="bg-slate-900 text-white p-4 md:p-6 flex flex-wrap justify-between items-center gap-4">
+    <div className="flex min-h-screen bg-slate-50 text-slate-800 font-sans antialiased">
+      {/* ================= ЗҮҮН ТАЛЫН БОСОО ЦЭС (SIDEBAR) ================= */}
+      <aside className="w-72 bg-gradient-to-b from-slate-950 via-blue-950 to-slate-900 text-slate-100 flex flex-col justify-between p-5 border-r border-blue-900/40 shadow-2xl shrink-0">
+        <div>
+          {/* Лого & Гарчиг */}
+          <div className="flex items-center space-x-3 mb-6 px-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/30">
+              Э
+            </div>
+            <div>
+              <h1 className="font-bold text-lg text-white tracking-wide">ЭДҮ-СИСТЕМ</h1>
+              <p className="text-[11px] text-blue-300 font-medium">Сургуулийн удирдлага</p>
+            </div>
+          </div>
+
+          {/* ДЭЭД ХЭСЭГТ: ДИЖИТАЛ ХУАНЛИ ВЕДЖЕТ */}
+          <DigitalCalendarWidget />
+
+          {/* ДООШОО ЦУВСАН СИСТЕМИЙН ЦЭСНҮҮД */}
+          <nav className="space-y-1.5">
+            <div className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider px-3 mb-2">
+              Системийн Цэс
+            </div>
+            {menuItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as any)}
+                  className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 border-l-4 border-cyan-300 font-semibold"
+                      : "text-blue-100/80 hover:bg-blue-900/40 hover:text-white"
+                  }`}
+                >
+                  <span className={isActive ? "text-cyan-200" : "text-blue-300"}>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Нэвтэрсэн хэрэглэгч & Горим солих */}
+        <div className="pt-4 border-t border-blue-900/60 mt-6">
+          <div className="bg-blue-900/30 border border-blue-800/40 rounded-xl p-3">
+            <div className="text-xs text-blue-300 mb-1">Горим сонгох:</div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                onClick={() => setRole("teacher")}
+                className={`py-1.5 text-xs font-semibold rounded-lg transition ${
+                  role === "teacher"
+                    ? "bg-cyan-400 text-slate-950 shadow"
+                    : "bg-blue-950 text-blue-200 hover:bg-blue-900"
+                }`}
+              >
+                Багш
+              </button>
+              <button
+                onClick={() => setRole("parent")}
+                className={`py-1.5 text-xs font-semibold rounded-lg transition ${
+                  role === "parent"
+                    ? "bg-cyan-400 text-slate-950 shadow"
+                    : "bg-blue-950 text-blue-200 hover:bg-blue-900"
+                }`}
+              >
+                Эцэг эх
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* ================= ҮНДСЭН АГУУЛГЫН ХЭСЭГ (RIGHT CONTENT) ================= */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* Толгой хэсэг (Header) */}
+        <header className="bg-white border-b border-slate-200/80 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">🏫 23-р сургууль - Цэцэгхэн Цонх</h1>
-            <p className="text-xs text-slate-400 mt-1">
-              {role === "teacher"
-                ? "👨‍🏫 Багшийн удирдлагын хэсэг"
-                : `👨‍👩‍👧 Эцэг эхийн хэсэг ${loggedInStudent ? `(${loggedInStudent.name})` : "(Нэвтрээгүй)"}`}
+            <h2 className="text-xl font-bold text-slate-900">
+              {menuItems.find((m) => m.id === activeTab)?.label}
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Минималист сургуулийн удирдлагын платформ
             </p>
           </div>
-          
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setRole("teacher"); }}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition ${
-                role === "teacher" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-              }`}
-            >
-              Багшийн хэсэг
-            </button>
-            <button
-              onClick={() => setRole("parent")}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition ${
-                role === "parent" ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-              }`}
-            >
-              Эцэг эхийн хэсэг
-            </button>
-          </div>
-        </div>
 
-        {/* НАВИГАЦИ ЦЭС */}
-        <div className="flex overflow-x-auto bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-          {[
-            { id: "announcements", label: "📢 Зар мэдээ" },
-            { id: "homework", label: "📚 Гэрийн даалгавар" },
-            { id: "tasks", label: "📋 Хийгдэх ажлууд & Ирц" },
-            { id: "students", label: "👨‍🎓 Сурагчид" },
-            { id: "schedule", label: "📅 Хичээлийн хуваарь" },
-            { id: "rules", label: "📜 Ангийн дүрэм" },
-            { id: "grades", label: "📊 Дүнгийн мэдээ" },
-            { id: "chat", label: "💬 Чат & Холбоо" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-5 py-3 text-xs md:text-sm font-bold whitespace-nowrap border-b-2 transition ${
-                activeTab === tab.id
-                  ? "border-blue-600 text-blue-600 bg-white"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* АГУУЛГА ХЭСЭГ */}
-        <div className="p-4 md:p-6">
-
-          {/* Нууцлал шаардах цэс дээр код шалгах */}
-          {role === "parent" && !loggedInStudent && isPrivateTab ? (
-            <div className="p-8 max-w-md mx-auto text-center my-8 space-y-4 bg-slate-50 border rounded-2xl">
-              <span className="text-4xl">🔐</span>
-              <h2 className="text-xl font-bold">Хүүхдийн мэдээлэл харах</h2>
-              <p className="text-xs text-slate-500">
-                Та хүүхдийнхээ дүн, ирцийн мэдээллийг харахын тулд багшаас авсан кодоо оруулна уу. (Жишээ нь: STU-001)
-              </p>
-              <form onSubmit={handleParentLogin} className="space-y-3">
+          <div className="flex items-center space-x-4">
+            {role === "parent" && (
+              <div className="flex items-center space-x-2 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl">
+                <span className="text-xs text-blue-700 font-medium">Сурагчийн код:</span>
                 <input
                   type="text"
-                  placeholder="Код оруулна уу (жишээ нь: STU-001)"
-                  value={parentCodeInput}
-                  onChange={(e) => setParentCodeInput(e.target.value)}
-                  className="w-full px-4 py-3 border rounded-xl text-center font-mono font-bold uppercase tracking-widest focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="Жишээ: STU-001"
+                  value={parentCode}
+                  onChange={(e) => setParentCode(e.target.value)}
+                  className="w-28 text-xs bg-white border border-blue-300 rounded-md px-2 py-1 text-slate-800 uppercase focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold"
                 />
-                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
-                  Нэвтрэх
-                </button>
-              </form>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-3 bg-slate-100/80 px-3 py-1.5 rounded-xl border border-slate-200">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
+                {role === "teacher" ? "БАГ" : "ЭЦЭ"}
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-bold text-slate-800">
+                  {role === "teacher" ? "Багш: Д.Батбаяр" : selectedStudent ? `${selectedStudent.name}-н эцэг эх` : "Эцэг эх"}
+                </div>
+                <div className="text-[10px] text-blue-600 font-semibold">
+                  {role === "teacher" ? "5-А Анги удирдсан багш" : selectedStudent ? `Код: ${selectedStudent.code}` : "Кодоо оруулна уу"}
+                </div>
+              </div>
             </div>
-          ) : (
-            <>
-              {/* 1. ЗАР МЭДЭЭ */}
-              {activeTab === "announcements" && (
-                <div className="space-y-6 max-w-3xl">
-                  <h2 className="text-xl font-bold">📢 Ангийн зар мэдээ</h2>
+          </div>
+        </header>
 
-                  {role === "teacher" && (
-                    <form onSubmit={handleAddAnnouncement} className="p-4 border rounded-xl bg-slate-50 space-y-3">
-                      <h3 className="font-bold text-sm">Шинэ зар мэдээ оруулах</h3>
-                      <input
-                        type="text"
-                        placeholder="Зар мэдээний гарчиг..."
-                        value={newAnnTitle}
-                        onChange={(e) => setNewAnnTitle(e.target.value)}
-                        className="w-full border px-3 py-2 rounded-lg text-sm outline-none"
-                      />
-                      <textarea
-                        placeholder="Зар мэдээний дэлгэрэнгүй агуулга..."
-                        value={newAnnContent}
-                        onChange={(e) => setNewAnnContent(e.target.value)}
-                        className="w-full border px-3 py-2 rounded-lg text-sm outline-none h-20"
-                      />
-                      <button type="submit" className="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg text-sm">
-                        + Зар нийтлэх
-                      </button>
-                    </form>
-                  )}
-
-                  <div className="space-y-4">
-                    {announcements.map((a) => (
-                      <div key={a.id} className="p-5 border rounded-xl bg-white shadow-sm space-y-2">
-                        <div className="flex justify-between items-center">
-                          <h3 className="font-bold text-base text-blue-700">{a.title}</h3>
-                          <span className="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded font-mono">{a.date}</span>
-                        </div>
-                        <p className="text-sm text-slate-700 leading-relaxed">{a.content}</p>
-                      </div>
-                    ))}
-                  </div>
+        {/* Агуулга */}
+        <div className="p-8 max-w-7xl mx-auto w-full">
+          {/* ---------------- 1. ХИЧЭЭЛИЙН ХУВААРЬ ---------------- */}
+          {activeTab === "schedule" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">5-А Ангийн Хичээлийн Хуваарь</h3>
+                  <p className="text-xs text-slate-500">Долоо хоногийн 5 өдөр, өдөрт 7 хичээлийн цаг</p>
                 </div>
-              )}
-
-              {/* 2. ГЭРИЙН ДААЛГАВАР */}
-              {activeTab === "homework" && (
-                <div className="space-y-6 max-w-3xl">
-                  <h2 className="text-xl font-bold">📚 Гэрийн даалгавар</h2>
-
-                  {role === "teacher" && (
-                    <form onSubmit={handleAddHomework} className="p-4 border rounded-xl bg-slate-50 space-y-3">
-                      <h3 className="font-bold text-sm">Шинэ даалгавар өгөх</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Хичээл (Математик...)"
-                          value={newHwSubject}
-                          onChange={(e) => setNewHwSubject(e.target.value)}
-                          className="border px-3 py-2 rounded-lg text-sm outline-none"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Даалгаврын гарчиг..."
-                          value={newHwTitle}
-                          onChange={(e) => setNewHwTitle(e.target.value)}
-                          className="border px-3 py-2 rounded-lg text-sm outline-none"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Хугацаа (Баасан гараг...)"
-                          value={newHwDueDate}
-                          onChange={(e) => setNewHwDueDate(e.target.value)}
-                          className="border px-3 py-2 rounded-lg text-sm outline-none"
-                        />
-                      </div>
-                      <textarea
-                        placeholder="Даалгаврын тайлбар..."
-                        value={newHwDesc}
-                        onChange={(e) => setNewHwDesc(e.target.value)}
-                        className="w-full border px-3 py-2 rounded-lg text-sm outline-none h-16"
-                      />
-                      <button type="submit" className="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg text-sm">
-                        + Даалгавар нэмэх
-                      </button>
-                    </form>
-                  )}
-
-                  <div className="grid grid-cols-1 gap-4">
-                    {homeworks.map((hw) => (
-                      <div key={hw.id} className="p-4 border rounded-xl bg-white shadow-sm flex flex-col gap-2">
-                        <div className="flex justify-between items-center">
-                          <span className="bg-blue-100 text-blue-800 font-bold text-xs px-2.5 py-1 rounded">
-                            {hw.subject}
-                          </span>
-                          <span className="text-xs text-red-600 font-semibold">Хугацаа: {hw.dueDate}</span>
-                        </div>
-                        <h3 className="font-bold text-slate-800">{hw.title}</h3>
-                        <p className="text-xs text-slate-600">{hw.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 3. ХИЙГДЭХ АЖЛУУД & ИРЦ, ОРОЛЦОО */}
-              {activeTab === "tasks" && (
-                <div className="space-y-6">
-                  <div className="flex flex-wrap justify-between items-center gap-4 border-b pb-4">
-                    <div>
-                      <h2 className="text-xl font-bold">📋 Хийгдэх ажлууд & Ирц, оролцооны бүртгэл</h2>
-                      <p className="text-xs text-slate-500">
-                        {role === "parent"
-                          ? `Зөвхөн ${loggedInStudent?.name}-ийн ирц ба оролцоо харагдаж байна.`
-                          : "Ажил бүрээр сурагчдын ирц, оролцоог бүртгэх хэсэг."}
-                      </p>
-                    </div>
-
-                    {role === "teacher" && (
-                      <form onSubmit={handleAddTask} className="flex gap-2 w-full md:w-auto">
-                        <input
-                          type="text"
-                          placeholder="Шинэ ажил/арга хэмжээ..."
-                          value={newTaskTitle}
-                          onChange={(e) => setNewTaskTitle(e.target.value)}
-                          className="px-4 py-2 border rounded-lg text-sm outline-none"
-                        />
-                        <button type="submit" className="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg text-sm">
-                          + Ажил нэмэх
-                        </button>
-                      </form>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        onClick={() => setSelectedTaskId(task.id)}
-                        className={`p-4 rounded-xl border cursor-pointer transition ${
-                          selectedTaskId === task.id ? "bg-blue-50 border-blue-600 shadow-sm" : "bg-slate-50 hover:bg-slate-100"
-                        }`}
+                {role === "teacher" && (
+                  <div>
+                    {!isEditingSchedule ? (
+                      <button
+                        onClick={() => {
+                          setTempSchedule(JSON.parse(JSON.stringify(schedule)));
+                          setIsEditingSchedule(true);
+                        }}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition shadow-sm"
                       >
-                        <h3 className="font-bold text-sm">{task.title}</h3>
-                        <p className="text-xs text-slate-500 mt-1">Огноо: {task.date}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {selectedTask && (
-                    <div className="mt-6 border rounded-xl p-4 bg-white shadow-sm space-y-4">
-                      <h3 className="font-bold text-base bg-slate-900 text-white p-3 rounded-lg">
-                        📌 "{selectedTask.title}" - Ирц & Оролцоо
-                      </h3>
-
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs md:text-sm">
-                          <thead>
-                            <tr className="bg-slate-100 text-slate-600 border-b">
-                              <th className="p-3">№</th>
-                              <th className="p-3">Нэр</th>
-                              <th className="p-3">Код</th>
-                              <th className="p-3">Ирц</th>
-                              <th className="p-3">Оролцоо</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y">
-                            {displayStudents.map((student, index) => {
-                              const record = selectedTask.records[student.id] || {
-                                attendance: "Ирсэн",
-                                participation: "Идэвхтэй",
-                              };
-                              return (
-                                <tr key={student.id} className="hover:bg-slate-50">
-                                  <td className="p-3 font-semibold text-slate-400">{index + 1}</td>
-                                  <td className="p-3 font-bold">{student.name}</td>
-                                  <td className="p-3 font-mono text-xs">{student.code}</td>
-                                  <td className="p-3">
-                                    {role === "teacher" ? (
-                                      <select
-                                        value={record.attendance}
-                                        onChange={(e) =>
-                                          handleTaskAttendanceChange(selectedTask.id, student.id, e.target.value as any)
-                                        }
-                                        className="border rounded px-2 py-1 text-xs"
-                                      >
-                                        <option value="Ирсэн">Ирсэн</option>
-                                        <option value="Хоцорсон">Хоцорсон</option>
-                                        <option value="Чөлөөтэй">Чөлөөтэй</option>
-                                        <option value="Тасалсан">Тасалсан</option>
-                                      </select>
-                                    ) : (
-                                      <span className="font-bold text-blue-700">{record.attendance}</span>
-                                    )}
-                                  </td>
-                                  <td className="p-3">
-                                    {role === "teacher" ? (
-                                      <input
-                                        type="text"
-                                        value={record.participation}
-                                        onChange={(e) => handleTaskParticipationChange(selectedTask.id, student.id, e.target.value)}
-                                        className="border rounded px-2 py-1 text-xs w-full max-w-xs"
-                                      />
-                                    ) : (
-                                      <span>{record.participation}</span>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 4. СУРАГЧИД */}
-              {activeTab === "students" && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold">
-                      {role === "parent" ? "Хүүхдийн мэдээлэл" : `Нийт сурагчид: ${students.length}`}
-                    </h2>
-                    {role === "teacher" && (
-                      <form onSubmit={handleAddStudent} className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Шинэ сурагчийн нэр..."
-                          value={newStudentName}
-                          onChange={(e) => setNewStudentName(e.target.value)}
-                          className="px-3 py-1.5 border rounded-lg text-sm"
-                        />
-                        <button type="submit" className="bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg text-sm">
-                          + Нэмэх
+                        Хуваарь засах
+                      </button>
+                    ) : (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={handleSaveSchedule}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition shadow-sm"
+                        >
+                          Хадгалах
                         </button>
-                      </form>
+                        <button
+                          onClick={() => setIsEditingSchedule(false)}
+                          className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold rounded-xl transition"
+                        >
+                          Цуцлах
+                        </button>
+                      </div>
                     )}
                   </div>
+                )}
+              </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs md:text-sm">
-                      <thead>
-                        <tr className="bg-slate-100 border-b">
-                          <th className="p-3">№</th>
-                          <th className="p-3">Нэр</th>
-                          <th className="p-3">Давтагдашгүй код</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {displayStudents.map((student, index) => (
-                          <tr key={student.id}>
-                            <td className="p-3 text-slate-400">{index + 1}</td>
-                            <td className="p-3 font-bold">{student.name}</td>
-                            <td className="p-3 font-mono font-bold">{student.code}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* 5. ХИЧЭЭЛИЙН ХУВААРЬ (ХҮСНЭГТЭН БАЙДЛААР, ӨДӨРТ 7 ЦАГ) */}
-              {activeTab === "schedule" && (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
-                    <div>
-                      <h2 className="text-xl font-bold">📅 Долоо хоногийн хичээлийн хуваарь</h2>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {role === "teacher"
-                          ? "✍️ Багш нүд тус бүрт хичээлийн нэрийг бичиж, шууд засах боломжтой."
-                          : "👀 Багшийн шинэчилсэн 7 цагийн хичээлийн хуваарь."}
-                      </p>
-                    </div>
-                    {role === "teacher" && (
-                      <span className="text-xs bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full border border-green-300">
-                        ✏️ Шууд засах боломжтой
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="overflow-x-auto border rounded-xl shadow-sm bg-white">
-                    <table className="w-full text-left border-collapse text-xs md:text-sm">
-                      <thead>
-                        <tr className="bg-slate-900 text-white text-center font-bold">
-                          <th className="p-3 border-r border-slate-700 w-24">Цаг</th>
-                          {schedule.map((dayItem, idx) => (
-                            <th key={idx} className="p-3 border-r border-slate-700 min-w-[130px]">
-                              {dayItem.day}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200">
-                        {Array.from({ length: 7 }).map((_, periodIndex) => (
-                          <tr key={periodIndex} className={periodIndex % 2 === 0 ? "bg-slate-50/50" : "bg-white"}>
-                            {/* Цагийн дугаар */}
-                            <td className="p-3 font-bold text-center bg-slate-100 text-slate-700 border-r border-slate-200">
-                              {periodIndex + 1}-р цаг
-                            </td>
-
-                            {/* 5 өдрийн тухайн цагийн хичээлүүд */}
-                            {schedule.map((dayItem, dayIdx) => (
-                              <td key={dayIdx} className="p-2 border-r border-slate-200">
-                                {role === "teacher" ? (
-                                  <input
-                                    type="text"
-                                    value={dayItem.lessons[periodIndex] || ""}
-                                    onChange={(e) => handleLessonChange(dayIdx, periodIndex, e.target.value)}
-                                    placeholder={`${periodIndex + 1}-р цаг...`}
-                                    className="w-full px-2 py-1.5 text-xs md:text-sm border rounded border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
-                                  />
-                                ) : (
-                                  <div className="px-2 py-1 text-center font-semibold text-slate-800">
-                                    {dayItem.lessons[periodIndex] || (
-                                      <span className="text-slate-300 font-normal italic">-</span>
-                                    )}
-                                  </div>
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* 6. АНГИЙН ДҮРЭМ */}
-              {activeTab === "rules" && (
-                <div className="space-y-4 max-w-2xl">
-                  <h2 className="text-xl font-bold">📜 Ангийн дүрэм</h2>
-                  <div className="space-y-2 text-sm">
-                    {["1. Хичээлээс хоцрохгүй байх", "2. Бусдыг хүндэтгэх", "3. Анги цэвэр байлгах", "4. Гар утас оролдохгүй байх"].map((r, i) => (
-                      <div key={i} className="p-3 bg-slate-50 border rounded-lg font-medium">{r}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 7. ДҮНГИЙН МЭДЭЭ */}
-              {activeTab === "grades" && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold">📊 Дүнгийн мэдээ</h2>
-                  <table className="w-full text-left border-collapse text-xs md:text-sm">
+              <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-100 border-b">
-                        <th className="p-3">№</th>
-                        <th className="p-3">Нэр</th>
-                        <th className="p-3">Код</th>
-                        <th className="p-3">Ерөнхий дүн</th>
+                      <tr className="bg-slate-900 text-white text-xs uppercase tracking-wider">
+                        <th className="p-4 border-b border-slate-800 font-bold w-20 text-center">Цаг</th>
+                        {schedule.map((s) => (
+                          <th key={s.day} className="p-4 border-b border-slate-800 font-semibold text-center border-l border-slate-800">
+                            {s.day}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
-                      {displayStudents.map((s, idx) => (
-                        <tr key={s.id}>
-                          <td className="p-3">{idx + 1}</td>
-                          <td className="p-3 font-bold">{s.name}</td>
-                          <td className="p-3 font-mono">{s.code}</td>
-                          <td className="p-3 font-bold text-blue-600">{s.grade}</td>
+                    <tbody className="divide-y divide-slate-200 text-sm">
+                      {[0, 1, 2, 3, 4, 5, 6].map((periodIndex) => (
+                        <tr key={periodIndex} className="hover:bg-blue-50/30 transition-colors">
+                          <td className="p-3 text-center font-mono font-bold text-blue-900 bg-slate-50/80 border-r border-slate-200">
+                            {periodIndex + 1}-р цаг
+                          </td>
+                          {schedule.map((dayData, dayIdx) => (
+                            <td key={dayData.day} className="p-3 text-center border-l border-slate-200">
+                              {isEditingSchedule ? (
+                                <input
+                                  type="text"
+                                  value={tempSchedule[dayIdx].lessons[periodIndex] || ""}
+                                  onChange={(e) => {
+                                    const updated = [...tempSchedule];
+                                    updated[dayIdx].lessons[periodIndex] = e.target.value;
+                                    setTempSchedule(updated);
+                                  }}
+                                  className="w-full text-center text-xs border border-blue-300 rounded-lg py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                                />
+                              ) : (
+                                <span
+                                  className={`inline-block px-3 py-1 rounded-lg text-xs font-medium ${
+                                    dayData.lessons[periodIndex] && dayData.lessons[periodIndex] !== "-"
+                                      ? "bg-blue-50 text-blue-900 border border-blue-100"
+                                      : "text-slate-400 font-light"
+                                  }`}
+                                >
+                                  {dayData.lessons[periodIndex] || "-"}
+                                </span>
+                              )}
+                            </td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
 
-              {/* 8. ЧАТ */}
-              {activeTab === "chat" && (
-                <div className="space-y-4 max-w-2xl">
-                  <h2 className="text-xl font-bold">💬 Чат & Холбоо</h2>
-                  <div className="bg-slate-100 p-4 rounded-xl h-64 overflow-y-auto space-y-2 border">
-                    {messages.length === 0 ? (
-                      <p className="text-slate-400 text-center text-sm my-auto">Энд мессеж бичиж харилцана уу.</p>
-                    ) : (
-                      messages.map((m, i) => (
-                        <div key={i} className="bg-white p-3 rounded-lg shadow-sm text-sm">
-                          <span className="font-bold text-blue-600">{m.sender}: </span>
-                          <span>{m.text}</span>
-                        </div>
-                      ))
+          {/* ---------------- 2. ЗАР МЭДЭЭ ---------------- */}
+          {activeTab === "announcements" && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-4">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Сүүлийн үеийн зар сонордуулга</h3>
+                {announcements.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md transition relative overflow-hidden"
+                  >
+                    {item.important && (
+                      <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-sm">
+                        Чухал зар
+                      </div>
                     )}
+                    <div className="flex items-center space-x-2 text-xs font-semibold text-blue-600 mb-2">
+                      <span>📢</span>
+                      <span>Огноо: {item.date}</span>
+                    </div>
+                    <h4 className="text-base font-bold text-slate-900 mb-2">{item.title}</h4>
+                    <p className="text-sm text-slate-600 leading-relaxed">{item.content}</p>
                   </div>
-                  <form onSubmit={handleSendMessage} className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Мессеж бичих..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      className="flex-1 border px-4 py-2 rounded-lg text-sm outline-none"
-                    />
-                    <button type="submit" className="bg-blue-600 text-white font-bold px-4 py-2 rounded-lg text-sm">
-                      Илгээх
+                ))}
+              </div>
+
+              {role === "teacher" && (
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm h-fit">
+                  <h4 className="text-base font-bold text-slate-900 mb-4">Шинэ зар нийтлэх</h4>
+                  <form onSubmit={handleAddAnnouncement} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Гарчиг</label>
+                      <input
+                        type="text"
+                        value={newAnnouncement.title}
+                        onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Зар мэдээний гарчиг..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Агуулга</label>
+                      <textarea
+                        rows={4}
+                        value={newAnnouncement.content}
+                        onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Дэлгэрэнгүй мэдээлэл..."
+                      ></textarea>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="imp"
+                        checked={newAnnouncement.important}
+                        onChange={(e) => setNewAnnouncement({ ...newAnnouncement, important: e.target.checked })}
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                      />
+                      <label htmlFor="imp" className="text-xs text-slate-700 font-medium">
+                        Чухал зар болгох
+                      </label>
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                    >
+                      Нийтлэх
                     </button>
                   </form>
                 </div>
               )}
-            </>
+            </div>
           )}
 
+          {/* ---------------- 3. ГЭРИЙН ДААЛГАВАР ---------------- */}
+          {activeTab === "homework" && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-4">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Гэрийн даалгаврын жагсаалт</h3>
+                {homework.map((hw) => (
+                  <div key={hw.id} className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 font-bold text-xs rounded-lg">
+                        {hw.subject}
+                      </span>
+                      <span className="text-xs text-amber-600 font-semibold bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md">
+                        Дуусах: {hw.dueDate}
+                      </span>
+                    </div>
+                    <h4 className="text-base font-bold text-slate-900 mb-2">{hw.title}</h4>
+                    <p className="text-sm text-slate-600">{hw.description}</p>
+                  </div>
+                ))}
+              </div>
+
+              {role === "teacher" && (
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm h-fit">
+                  <h4 className="text-base font-bold text-slate-900 mb-4">Даалгавар нэмэх</h4>
+                  <form onSubmit={handleAddHomework} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Хичээл</label>
+                      <select
+                        value={newHomework.subject}
+                        onChange={(e) => setNewHomework({ ...newHomework, subject: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      >
+                        <option>Математик</option>
+                        <option>Монгол хэл</option>
+                        <option>Англи хэл</option>
+                        <option>Байгаль шинжлэл</option>
+                        <option>Уран зохиол</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Сэдэв/Даалгавар</label>
+                      <input
+                        type="text"
+                        value={newHomework.title}
+                        onChange={(e) => setNewHomework({ ...newHomework, title: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Жишээ: 45-р хуудас Дасгал 2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Хүлээлгэн өгөх огноо</label>
+                      <input
+                        type="date"
+                        value={newHomework.dueDate}
+                        onChange={(e) => setNewHomework({ ...newHomework, dueDate: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Тайлбар</label>
+                      <textarea
+                        rows={3}
+                        value={newHomework.description}
+                        onChange={(e) => setNewHomework({ ...newHomework, description: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Дэлгэрэнгүй заавар..."
+                      ></textarea>
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                    >
+                      Даалгавар оруулах
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ---------------- 4. ХИЙГДЭХ АЖЛУУД & ИРЦ ---------------- */}
+          {activeTab === "tasks" && (
+            <div className="space-y-6">
+              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Өнөөдрийн ирцийн бүртгэл</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-blue-900 text-white text-xs uppercase">
+                        <th className="p-3 font-semibold">Сурагч</th>
+                        <th className="p-3 font-semibold">Код</th>
+                        <th className="p-3 font-semibold text-center">Ирцийн төлөв</th>
+                        <th className="p-3 font-semibold">Оролцоо / Тэмдэглэл</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 text-sm">
+                      {students.map((st) => (
+                        <tr key={st.id} className="hover:bg-slate-50">
+                          <td className="p-3 font-bold text-slate-800">{st.name}</td>
+                          <td className="p-3 font-mono text-xs text-slate-500">{st.code}</td>
+                          <td className="p-3 text-center">
+                            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                              Ирсэн
+                            </span>
+                          </td>
+                          <td className="p-3 text-xs text-slate-600">Идэвхтэй оролцсон</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ---------------- 5. СУРАГЧИД ---------------- */}
+          {activeTab === "students" && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-4">
+                <h3 className="text-lg font-bold text-slate-900">Ангийн сурагчид ({students.length})</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {students.map((st) => (
+                    <div
+                      key={st.id}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm flex items-center justify-between"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 font-bold flex items-center justify-center">
+                          {st.name[0]}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-900">{st.name}</h4>
+                          <p className="text-xs font-mono text-slate-500">Код: {st.code}</p>
+                        </div>
+                      </div>
+                      <span className="px-3 py-1 bg-slate-100 font-mono text-xs font-bold text-slate-700 rounded-lg">
+                        Голч: {st.grade}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {role === "teacher" && (
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm h-fit">
+                  <h4 className="text-base font-bold text-slate-900 mb-4">Сурагч бүртгэх</h4>
+                  <form onSubmit={handleAddStudent} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Овог Нэр</label>
+                      <input
+                        type="text"
+                        value={newStudent.name}
+                        onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Жишээ: Амина.Э"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Хувийн код</label>
+                      <input
+                        type="text"
+                        value={newStudent.code}
+                        onChange={(e) => setNewStudent({ ...newStudent, code: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none uppercase font-mono"
+                        placeholder="STU-006"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                    >
+                      Сурагч нэмэх
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ---------------- 6. ДҮНГИЙН МЭДЭЭ ---------------- */}
+          {activeTab === "grades" && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-4">
+                <h3 className="text-lg font-bold text-slate-900">Дүнгийн жагсаалт</h3>
+                <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-blue-950 text-white text-xs uppercase">
+                        <th className="p-3">Сурагч</th>
+                        <th className="p-3">Хичээл</th>
+                        <th className="p-3 text-center">Дүн/Оноо</th>
+                        <th className="p-3">Огноо</th>
+                        <th className="p-3">Тайлбар</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 text-sm">
+                      {grades.map((g) => {
+                        const st = students.find((s) => s.id === g.studentId);
+                        return (
+                          <tr key={g.id} className="hover:bg-slate-50">
+                            <td className="p-3 font-bold text-slate-800">{st?.name || "Сурагч"}</td>
+                            <td className="p-3 text-xs font-semibold text-blue-700">{g.subject}</td>
+                            <td className="p-3 text-center font-bold text-emerald-600 font-mono">{g.score}</td>
+                            <td className="p-3 text-xs text-slate-500">{g.date}</td>
+                            <td className="p-3 text-xs text-slate-600">{g.comment}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {role === "teacher" && (
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm h-fit">
+                  <h4 className="text-base font-bold text-slate-900 mb-4">Дүн оруулах</h4>
+                  <form onSubmit={handleAddGrade} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Сурагч сонгох</label>
+                      <select
+                        value={newGrade.studentId}
+                        onChange={(e) => setNewGrade({ ...newGrade, studentId: Number(e.target.value) })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      >
+                        {students.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} ({s.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Хичээл</label>
+                      <select
+                        value={newGrade.subject}
+                        onChange={(e) => setNewGrade({ ...newGrade, subject: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      >
+                        <option>Математик</option>
+                        <option>Монгол хэл</option>
+                        <option>Англи хэл</option>
+                        <option>Байгаль шинжлэл</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Дүн / Оноо</label>
+                      <input
+                        type="text"
+                        value={newGrade.score}
+                        onChange={(e) => setNewGrade({ ...newGrade, score: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Жишээ: 95 (A)"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Тайлбар</label>
+                      <input
+                        type="text"
+                        value={newGrade.comment}
+                        onChange={(e) => setNewGrade({ ...newGrade, comment: e.target.value })}
+                        className="w-full text-sm border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        placeholder="Жишээ: Бие даалт сайн хийсэн"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                    >
+                      Дүн хадгалах
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ---------------- 7. АНГИЙН ДҮРЭМ ---------------- */}
+          {activeTab === "rules" && (
+            <div className="max-w-3xl space-y-6">
+              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Ангийн дагаж мөрдөх дүрэм журмууд</h3>
+                <div className="space-y-3">
+                  {rules.map((rule, idx) => (
+                    <div key={idx} className="p-4 bg-blue-50/50 border border-blue-100 rounded-xl text-slate-800 font-medium text-sm">
+                      {rule}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ---------------- 8. ЧАТ & ХОЛБОО ---------------- */}
+          {activeTab === "chat" && (
+            <div className="max-w-3xl bg-white border border-slate-200/80 rounded-2xl shadow-sm flex flex-col h-[600px] overflow-hidden">
+              <div className="p-4 bg-slate-900 text-white font-bold text-sm flex items-center justify-between">
+                <span>Багш болон Эцэг эхийн харилцах чат</span>
+                <span className="text-xs text-cyan-300 font-normal">Онлайн</span>
+              </div>
+
+              <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
+                {messages.map((m) => {
+                  const isMe = m.sender === role;
+                  return (
+                    <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className={`max-w-md rounded-2xl px-4 py-3 text-sm shadow-sm ${
+                          isMe
+                            ? "bg-blue-600 text-white rounded-br-none"
+                            : "bg-white text-slate-800 border border-slate-200 rounded-bl-none"
+                        }`}
+                      >
+                        <p>{m.text}</p>
+                        <div className={`text-[10px] mt-1 text-right ${isMe ? "text-blue-200" : "text-slate-400"}`}>
+                          {m.time}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-200 bg-white flex space-x-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Зурвас бичих..."
+                  className="flex-1 border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-sm"
+                >
+                  Илгээх
+                </button>
+              </form>
+            </div>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
