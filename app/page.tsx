@@ -37,6 +37,11 @@ interface Announcement {
   content: string;
 }
 
+interface ScheduleDay {
+  day: string;
+  lessons: string[]; // Өдөрт 7 цагийн хичээл
+}
+
 const INITIAL_STUDENTS: Student[] = [
   { id: 1, name: "Амина.Э", code: "STU-001", grade: "A" },
   { id: 2, name: "Аминзаяа.М", code: "STU-002", grade: "B" },
@@ -84,11 +89,20 @@ const INITIAL_STUDENTS: Student[] = [
   { id: 44, name: "Эрхэмбаяр.Л", code: "STU-044", grade: "B" },
 ];
 
+// Өдөр бүр 7 цагийн хичээлийн анхны хуваарь
+const INITIAL_SCHEDULE: ScheduleDay[] = [
+  { day: "Даваа", lessons: ["Математик", "Монгол хэл", "Англи хэл", "Биеийн тамир", "Байгаль шинжлэл", "", ""] },
+  { day: "Мягмар", lessons: ["Байгаль шинжлэл", "Математик", "Уран зохиол", "Дүрслэх урлаг", "Англи хэл", "", ""] },
+  { day: "Лхагва", lessons: ["Монгол хэл", "Мэдээлэл технологи", "Математик", "Хөгжим", "Иргэний ёс зүй", "", ""] },
+  { day: "Пүрэв", lessons: ["Англи хэл", "Математик", "Иргэний ёс зүй", "Биеийн тамир", "Уран зохиол", "", ""] },
+  { day: "Баасан", lessons: ["Монгол хэл", "Математик", "Дизайн технологи", "Ангийн цаг", "Сонгон хичээл", "", ""] },
+];
+
 export default function ClassroomSystem() {
   const [role, setRole] = useState<"teacher" | "parent">("teacher");
   const [activeTab, setActiveTab] = useState<
     "announcements" | "homework" | "tasks" | "students" | "schedule" | "rules" | "grades" | "chat"
-  >("announcements");
+  >("schedule");
 
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
   const [newStudentName, setNewStudentName] = useState("");
@@ -144,6 +158,9 @@ export default function ClassroomSystem() {
   ]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(1);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+
+  // 4. Хичээлийн хуваарь (5 өдөр, өдөрт 7 цаг)
+  const [schedule, setSchedule] = useState<ScheduleDay[]>(INITIAL_SCHEDULE);
 
   // Чат
   const [messages, setMessages] = useState<{ sender: string; text: string }[]>([]);
@@ -244,6 +261,19 @@ export default function ClassroomSystem() {
     );
   };
 
+  // Хичээлийн хуваарийн тухайн өдөр ба цагийн хичээлийг засах
+  const handleLessonChange = (dayIdx: number, periodIdx: number, value: string) => {
+    const updatedSchedule = schedule.map((item, dIdx) => {
+      if (dIdx === dayIdx) {
+        const newLessons = [...item.lessons];
+        newLessons[periodIdx] = value;
+        return { ...item, lessons: newLessons };
+      }
+      return item;
+    });
+    setSchedule(updatedSchedule);
+  };
+
   // Эцэг эхийн нэвтрэлт
   const handleParentLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,7 +281,7 @@ export default function ClassroomSystem() {
     if (found) {
       setLoggedInStudent(found);
     } else {
-      alert("Давтагдашгүй код олдсонгүй! Дээж код: STU-001 шалгана уу.");
+      alert("Давтагдашгүй код олдсонгүй! (Жишээ нь: STU-001) шалгана уу.");
     }
   };
 
@@ -265,8 +295,6 @@ export default function ClassroomSystem() {
   };
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId);
-
-  // Эцэг эх системд код оруулах шаардлагатай юу гэдгийг шалгах
   const isPrivateTab = ["tasks", "students", "grades"].includes(activeTab);
 
   return (
@@ -304,7 +332,7 @@ export default function ClassroomSystem() {
           </div>
         </div>
 
-        {/* НАВИГАЦИ ЦЭС - БАЙНГЫН ДЭЭРЭЭ ХАРАГДАНА */}
+        {/* НАВИГАЦИ ЦЭС */}
         <div className="flex overflow-x-auto bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
           {[
             { id: "announcements", label: "📢 Зар мэдээ" },
@@ -333,13 +361,13 @@ export default function ClassroomSystem() {
         {/* АГУУЛГА ХЭСЭГ */}
         <div className="p-4 md:p-6">
 
-          {/* Эцэг эхийн горимд хувийн мэдээлэл харахын тулд код оруулах шаардлагатай үед */}
+          {/* Нууцлал шаардах цэс дээр код шалгах */}
           {role === "parent" && !loggedInStudent && isPrivateTab ? (
             <div className="p-8 max-w-md mx-auto text-center my-8 space-y-4 bg-slate-50 border rounded-2xl">
               <span className="text-4xl">🔐</span>
               <h2 className="text-xl font-bold">Хүүхдийн мэдээлэл харах</h2>
               <p className="text-xs text-slate-500">
-                Та хүүхдийнхээ дүн, ирцийн мэдээллийг харахын тулд багшаас авсан давтагдашгүй кодоо оруулна уу. (Жишээ нь: STU-001)
+                Та хүүхдийнхээ дүн, ирцийн мэдээллийг харахын тулд багшаас авсан кодоо оруулна уу. (Жишээ нь: STU-001)
               </p>
               <form onSubmit={handleParentLogin} className="space-y-3">
                 <input
@@ -616,25 +644,69 @@ export default function ClassroomSystem() {
                 </div>
               )}
 
-              {/* 5. ХИЧЭЭЛИЙН ХУВААРЬ */}
+              {/* 5. ХИЧЭЭЛИЙН ХУВААРЬ (ХҮСНЭГТЭН БАЙДЛААР, ӨДӨРТ 7 ЦАГ) */}
               {activeTab === "schedule" && (
                 <div className="space-y-4">
-                  <h2 className="text-xl font-bold">📅 Хичээлийн хуваарь</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                    {[
-                      { day: "Даваа", list: ["1. Математик", "2. Монгол хэл", "3. Англи хэл", "4. Биеийн тамир"] },
-                      { day: "Мягмар", list: ["1. Байгаль шинжлэл", "2. Математик", "3. Уран зохиол", "4. Дүрслэх урлаг"] },
-                      { day: "Лхагва", list: ["1. Монгол хэл", "2. Мэдээлэл технологи", "3. Математик", "4. Хөгжим"] },
-                      { day: "Пүрэв", list: ["1. Англи хэл", "2. Математик", "3. Иргэний ёс зүй", "4. Биеийн тамир"] },
-                      { day: "Баасан", list: ["1. Монгол хэл", "2. Математик", "3. Дизайн технологи", "4. Ангийн цаг"] },
-                    ].map((item, idx) => (
-                      <div key={idx} className="border rounded-xl p-3 bg-slate-50">
-                        <h3 className="font-bold text-blue-600 border-b pb-1 mb-2">{item.day}</h3>
-                        <ul className="space-y-1 text-xs">
-                          {item.list.map((s, i) => <li key={i}>{s}</li>)}
-                        </ul>
-                      </div>
-                    ))}
+                  <div className="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
+                    <div>
+                      <h2 className="text-xl font-bold">📅 Долоо хоногийн хичээлийн хуваарь</h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {role === "teacher"
+                          ? "✍️ Багш нүд тус бүрт хичээлийн нэрийг бичиж, шууд засах боломжтой."
+                          : "👀 Багшийн шинэчилсэн 7 цагийн хичээлийн хуваарь."}
+                      </p>
+                    </div>
+                    {role === "teacher" && (
+                      <span className="text-xs bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full border border-green-300">
+                        ✏️ Шууд засах боломжтой
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="overflow-x-auto border rounded-xl shadow-sm bg-white">
+                    <table className="w-full text-left border-collapse text-xs md:text-sm">
+                      <thead>
+                        <tr className="bg-slate-900 text-white text-center font-bold">
+                          <th className="p-3 border-r border-slate-700 w-24">Цаг</th>
+                          {schedule.map((dayItem, idx) => (
+                            <th key={idx} className="p-3 border-r border-slate-700 min-w-[130px]">
+                              {dayItem.day}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {Array.from({ length: 7 }).map((_, periodIndex) => (
+                          <tr key={periodIndex} className={periodIndex % 2 === 0 ? "bg-slate-50/50" : "bg-white"}>
+                            {/* Цагийн дугаар */}
+                            <td className="p-3 font-bold text-center bg-slate-100 text-slate-700 border-r border-slate-200">
+                              {periodIndex + 1}-р цаг
+                            </td>
+
+                            {/* 5 өдрийн тухайн цагийн хичээлүүд */}
+                            {schedule.map((dayItem, dayIdx) => (
+                              <td key={dayIdx} className="p-2 border-r border-slate-200">
+                                {role === "teacher" ? (
+                                  <input
+                                    type="text"
+                                    value={dayItem.lessons[periodIndex] || ""}
+                                    onChange={(e) => handleLessonChange(dayIdx, periodIndex, e.target.value)}
+                                    placeholder={`${periodIndex + 1}-р цаг...`}
+                                    className="w-full px-2 py-1.5 text-xs md:text-sm border rounded border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                                  />
+                                ) : (
+                                  <div className="px-2 py-1 text-center font-semibold text-slate-800">
+                                    {dayItem.lessons[periodIndex] || (
+                                      <span className="text-slate-300 font-normal italic">-</span>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
